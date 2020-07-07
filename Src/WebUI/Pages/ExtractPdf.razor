@@ -1,0 +1,96 @@
+﻿@page "/ExtractPdf"
+
+@using DataJuggler.Blazor.FileUpload
+@using PdfToCsv.Application.Queries.ExtractPdfData
+@using PdfToCsv.Application.Queries.ExportToCSV
+@using PdfToCsv.Application.Common.Models
+@inject MediatR.IMediator mediator
+@inject BlazorDownloadFile.IBlazorDownloadFileService downloadService
+
+<h3>PDF Extraction</h3>
+
+<div class="fileuploader">
+    <FileUpload CustomSuccessMessage="Your PDF file extracted successfully." OnChange="OnFileUploaded"></FileUpload>
+    @status
+</div>
+@if (result != null)
+{
+    <button class="btn btn-success" type="button" @onclick="DownloadCSV">Export CSV</button>
+    <div class="col-12 form-inline">
+        <div class="col-6"><span>Name : @result.Name</span></div>
+        <div class="col-3"><label>Date : @result.Date</label></div>
+    </div>
+    <div class="col-12 form-inline mt-1 mb-1">
+        <div class="col-3"><span>Start Balance : @result.StartBalance</span></div>
+        <div class="col-3"><label>Final Balance : @result.FinalBalance</label></div>
+    </div>
+    <p>Period : @result.Period</p>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th scope="col">Transaction Date</th>
+                <th scope="col">Transaction Proccess Date</th>
+                <th scope="col">Data</th>
+                <th scope="col">Forigen Amount</th>
+                <th scope="col">Amount</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in result.Data)
+            {
+                @if (!string.IsNullOrEmpty(item.DataDetail))
+                {
+                    <tr>
+                        <td rowspan="2">@item.TransactionDate</td>
+                        <td rowspan="2">@item.ProccessDate</td>
+                        <td rowspan="1">@item.TransactionData</td>
+                        <td rowspan="1">@item.ForigenAmount</td>
+                        <td rowspan="2">@item.Amount</td>
+                    </tr>
+
+                    <tr>
+                        <td rowspan="1">@item.DataDetail</td>
+                        <td rowspan="1">@item.ForigenDetail</td>
+                    </tr>
+                }
+                else
+                {
+
+                    <tr>
+                        <td rowspan="1">@item.TransactionDate</td>
+                        <td rowspan="1">@item.ProccessDate</td>
+                        <td rowspan="1">@item.TransactionData</td>
+                        <td rowspan="1">@item.ForigenAmount</td>
+                        <td rowspan="1">@item.Amount</td>
+                    </tr>
+                }
+            }
+
+        </tbody>
+    </table>
+}
+@code
+{
+    // display the filename after upload
+    string status;
+    PdfOutput result;
+
+    private async void OnFileUploaded(UploadedFileInfo uploadedFileInfo)
+    {
+        result = await mediator.Send(new ExtractPdfDataQuery()
+        {
+            PdfFile = uploadedFileInfo.FullPath
+        });
+    }
+
+    private async void DownloadCSV()
+    {
+        var stream = await mediator.Send(new ExportCSVQuery()
+        {
+            Input = result
+        });
+
+        await downloadService.DownloadFile("CSVresult.csv", stream, "application/octet-stream");
+    }
+}
