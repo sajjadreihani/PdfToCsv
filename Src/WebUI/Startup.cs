@@ -12,7 +12,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using PdfToCsv.Application;
 using PdfToCsv.Infrastructures;
-using WebUI.Data;
 
 namespace WebUI
 {
@@ -34,7 +33,6 @@ namespace WebUI
             services.AddRazorPages();
             services.AddBlazorDownloadFile();
             services.AddServerSideBlazor();
-            services.AddSingleton<WeatherForecastService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
